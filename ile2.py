@@ -161,7 +161,6 @@ def setup_database():
     db.close()
 
 
-
 # ==========================================
 # PUBLIC PORTFOLIO
 # ==========================================
@@ -217,7 +216,6 @@ def home():
         skills=skills,
         projects=projects
     )
-
 
 
 # ==========================================
@@ -514,9 +512,11 @@ def admin():
 
             <form method="POST">
 
+
                 <label>
                     USERNAME
                 </label>
+
 
                 <input
                     type="text"
@@ -529,6 +529,7 @@ def admin():
                     PASSWORD
                 </label>
 
+
                 <input
                     type="password"
                     name="password"
@@ -540,6 +541,7 @@ def admin():
                     LOGIN
                 </button>
 
+
             </form>
 
 
@@ -550,6 +552,7 @@ def admin():
                 ← Back to Portfolio
             </a>
 
+
         </div>
 
 
@@ -557,7 +560,6 @@ def admin():
 
     </html>
     """
-
 
 
 # ==========================================
@@ -624,7 +626,6 @@ def dashboard():
     )
 
 
-
 # ==========================================
 # UPDATE PROFILE
 # ==========================================
@@ -683,7 +684,6 @@ def update_profile():
     return redirect("/dashboard")
 
 
-
 # ==========================================
 # ADD SKILL
 # ==========================================
@@ -724,7 +724,6 @@ def add_skill():
     return redirect("/dashboard")
 
 
-
 # ==========================================
 # DELETE SKILL
 # ==========================================
@@ -758,7 +757,6 @@ def delete_skill(id):
 
 
     return redirect("/dashboard")
-
 
 
 # ==========================================
@@ -817,7 +815,6 @@ def add_project():
     return redirect("/dashboard")
 
 
-
 # ==========================================
 # DELETE PROJECT
 # ==========================================
@@ -853,6 +850,294 @@ def delete_project(id):
     return redirect("/dashboard")
 
 
+# ==========================================
+# CHANGE ADMIN PASSWORD
+# ==========================================
+
+@app.route("/change-password", methods=["POST"])
+def change_password():
+
+    # Only logged-in admin can change password
+
+    if not session.get("admin"):
+
+        return redirect("/admin")
+
+
+    # Get passwords from form
+
+    current_password = request.form["current_password"]
+
+    new_password = request.form["new_password"]
+
+    confirm_password = request.form["confirm_password"]
+
+
+    # Connect to database
+
+    db = get_db()
+
+    cursor = db.cursor(dictionary=True)
+
+
+    # Get current admin
+
+    cursor.execute("""
+        SELECT *
+        FROM admin
+        WHERE username = %s
+    """, (
+        "swathi",
+    ))
+
+
+    admin_user = cursor.fetchone()
+
+
+    # --------------------------------------
+    # CHECK CURRENT PASSWORD
+    # --------------------------------------
+
+    if not admin_user or admin_user["password"] != current_password:
+
+        cursor.close()
+        db.close()
+
+        return """
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>Password Error</title>
+
+            <style>
+
+                body {
+
+                    font-family: Arial, sans-serif;
+
+                    background: #f4efe6;
+
+                    color: #173c31;
+
+                    text-align: center;
+
+                    padding-top: 100px;
+
+                }
+
+
+                a {
+
+                    color: #173c31;
+
+                    text-decoration: none;
+
+                    font-weight: bold;
+
+                }
+
+            </style>
+
+        </head>
+
+
+        <body>
+
+            <h2>
+                Current password is incorrect
+            </h2>
+
+
+            <p>
+
+                <a href="/dashboard#password">
+
+                    ← Try Again
+
+                </a>
+
+            </p>
+
+        </body>
+
+        </html>
+        """
+
+
+    # --------------------------------------
+    # CHECK NEW PASSWORDS
+    # --------------------------------------
+
+    if new_password != confirm_password:
+
+        cursor.close()
+        db.close()
+
+        return """
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>Password Error</title>
+
+            <style>
+
+                body {
+
+                    font-family: Arial, sans-serif;
+
+                    background: #f4efe6;
+
+                    color: #173c31;
+
+                    text-align: center;
+
+                    padding-top: 100px;
+
+                }
+
+
+                a {
+
+                    color: #173c31;
+
+                    text-decoration: none;
+
+                    font-weight: bold;
+
+                }
+
+            </style>
+
+        </head>
+
+
+        <body>
+
+            <h2>
+                New passwords do not match
+            </h2>
+
+
+            <p>
+
+                <a href="/dashboard#password">
+
+                    ← Try Again
+
+                </a>
+
+            </p>
+
+        </body>
+
+        </html>
+        """
+
+
+    # --------------------------------------
+    # CHECK EMPTY PASSWORD
+    # --------------------------------------
+
+    if not new_password.strip():
+
+        cursor.close()
+        db.close()
+
+        return """
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>Password Error</title>
+
+            <style>
+
+                body {
+
+                    font-family: Arial, sans-serif;
+
+                    background: #f4efe6;
+
+                    color: #173c31;
+
+                    text-align: center;
+
+                    padding-top: 100px;
+
+                }
+
+
+                a {
+
+                    color: #173c31;
+
+                    text-decoration: none;
+
+                    font-weight: bold;
+
+                }
+
+            </style>
+
+        </head>
+
+
+        <body>
+
+            <h2>
+                Password cannot be empty
+            </h2>
+
+
+            <p>
+
+                <a href="/dashboard#password">
+
+                    ← Try Again
+
+                </a>
+
+            </p>
+
+        </body>
+
+        </html>
+        """
+
+
+    # --------------------------------------
+    # UPDATE PASSWORD
+    # --------------------------------------
+
+    cursor.execute("""
+        UPDATE admin
+        SET password = %s
+        WHERE username = %s
+    """, (
+        new_password,
+        "swathi"
+    ))
+
+
+    db.commit()
+
+
+    cursor.close()
+    db.close()
+
+
+    # Return to dashboard
+
+    return redirect("/dashboard#password")
+
 
 # ==========================================
 # LOGOUT
@@ -864,7 +1149,6 @@ def logout():
     session.clear()
 
     return redirect("/")
-
 
 
 # ==========================================
