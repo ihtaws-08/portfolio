@@ -1,11 +1,19 @@
-from flask import Flask, request, redirect, session, render_template
+
+from flask import Flask, render_template, request, redirect, session
 import mysql.connector
 
 app = Flask(__name__)
+
+# Used for admin login sessions
 app.secret_key = "swathi_portfolio_secret"
 
 
+# ==========================================
+# MYSQL CONNECTION
+# ==========================================
+
 def get_db():
+
     return mysql.connector.connect(
         host="localhost",
         user="root",
@@ -14,9 +22,18 @@ def get_db():
     )
 
 
+# ==========================================
+# CREATE TABLES + INITIAL DATA
+# ==========================================
+
 def setup_database():
+
     db = get_db()
     cursor = db.cursor()
+
+    # --------------------------------------
+    # ADMIN TABLE
+    # --------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS admin (
@@ -25,6 +42,11 @@ def setup_database():
             password VARCHAR(100) NOT NULL
         )
     """)
+
+
+    # --------------------------------------
+    # PROFILE TABLE
+    # --------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS profile (
@@ -37,12 +59,22 @@ def setup_database():
         )
     """)
 
+
+    # --------------------------------------
+    # SKILLS TABLE
+    # --------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS skills (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(100) NOT NULL
         )
     """)
+
+
+    # --------------------------------------
+    # PROJECTS TABLE
+    # --------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS projects (
@@ -54,17 +86,37 @@ def setup_database():
         )
     """)
 
+
+    # ======================================
+    # DEFAULT ADMIN
+    # ======================================
+
     cursor.execute("SELECT COUNT(*) FROM admin")
 
-    if cursor.fetchone()[0] == 0:
+    admin_count = cursor.fetchone()[0]
+
+    if admin_count == 0:
+
         cursor.execute("""
-            INSERT INTO admin (username, password)
+            INSERT INTO admin
+            (username, password)
             VALUES (%s, %s)
-        """, ("swathi", "1234"))
+        """, (
+            "swathi",
+            "1234"
+        ))
+
+
+    # ======================================
+    # DEFAULT PROFILE
+    # ======================================
 
     cursor.execute("SELECT COUNT(*) FROM profile")
 
-    if cursor.fetchone()[0] == 0:
+    profile_count = cursor.fetchone()[0]
+
+    if profile_count == 0:
+
         cursor.execute("""
             INSERT INTO profile
             (id, name, title, bio, email, github)
@@ -78,9 +130,17 @@ def setup_database():
             "https://github.com/ihtaws-08/project"
         ))
 
+
+    # ======================================
+    # DEFAULT SKILLS
+    # ======================================
+
     cursor.execute("SELECT COUNT(*) FROM skills")
 
-    if cursor.fetchone()[0] == 0:
+    skill_count = cursor.fetchone()[0]
+
+    if skill_count == 0:
+
         skills = [
             ("Python",),
             ("SQL",),
@@ -89,10 +149,11 @@ def setup_database():
             ("Git/GitHub",)
         ]
 
-        cursor.executemany(
-            "INSERT INTO skills (name) VALUES (%s)",
-            skills
-        )
+        cursor.executemany("""
+            INSERT INTO skills (name)
+            VALUES (%s)
+        """, skills)
+
 
     db.commit()
 
@@ -100,22 +161,55 @@ def setup_database():
     db.close()
 
 
+
+# ==========================================
+# PUBLIC PORTFOLIO
+# ==========================================
+
 @app.route("/")
 def home():
+
     db = get_db()
+
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM profile WHERE id = 1")
+
+    # Get profile
+
+    cursor.execute("""
+        SELECT *
+        FROM profile
+        WHERE id = 1
+    """)
+
     profile = cursor.fetchone()
 
-    cursor.execute("SELECT * FROM skills ORDER BY id")
+
+    # Get skills
+
+    cursor.execute("""
+        SELECT *
+        FROM skills
+        ORDER BY id
+    """)
+
     skills = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM projects ORDER BY id DESC")
+
+    # Get projects
+
+    cursor.execute("""
+        SELECT *
+        FROM projects
+        ORDER BY id DESC
+    """)
+
     projects = cursor.fetchall()
+
 
     cursor.close()
     db.close()
+
 
     return render_template(
         "portfolio.html",
@@ -125,124 +219,304 @@ def home():
     )
 
 
+
+# ==========================================
+# ADMIN LOGIN
+# ==========================================
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
+
+    # ------------------------------
+    # LOGIN FORM SUBMITTED
+    # ------------------------------
 
     if request.method == "POST":
 
         username = request.form["username"]
+
         password = request.form["password"]
 
+
         db = get_db()
+
         cursor = db.cursor(dictionary=True)
 
+
         cursor.execute("""
-            SELECT * FROM admin
-            WHERE username = %s AND password = %s
-        """, (username, password))
+            SELECT *
+            FROM admin
+            WHERE username = %s
+            AND password = %s
+        """, (
+            username,
+            password
+        ))
+
 
         user = cursor.fetchone()
+
 
         cursor.close()
         db.close()
 
+
+        # ------------------------------
+        # CORRECT LOGIN
+        # ------------------------------
+
         if user:
+
             session["admin"] = True
+
             return redirect("/dashboard")
 
+
+        # ------------------------------
+        # WRONG LOGIN
+        # ------------------------------
+
         return """
-        <h2>Invalid username or password</h2>
-        <a href="/admin">Try Again</a>
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>Login Failed</title>
+
+            <style>
+
+                body {
+                    font-family: Arial;
+                    background: #f4efe6;
+                    text-align: center;
+                    padding-top: 100px;
+                    color: #173c31;
+                }
+
+                a {
+                    color: #173c31;
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            <h2>Invalid username or password</h2>
+
+            <p>
+                <a href="/admin">
+                    Try Again
+                </a>
+            </p>
+
+        </body>
+
+        </html>
         """
+
+
+    # ------------------------------
+    # LOGIN PAGE
+    # ------------------------------
 
     return """
     <!DOCTYPE html>
+
     <html>
+
     <head>
-        <title>Swathi | Admin Login</title>
+
+        <meta charset="UTF-8">
+
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        >
+
+        <title>Admin Login | Swathi</title>
+
 
         <style>
+
             * {
                 box-sizing: border-box;
             }
 
+
             body {
+
                 margin: 0;
+
                 min-height: 100vh;
+
                 display: flex;
-                align-items: center;
+
                 justify-content: center;
+
+                align-items: center;
+
                 background: #f4efe6;
+
                 font-family: Arial, sans-serif;
-                color: #26352f;
+
+                color: #173c31;
+
             }
+
 
             .login-box {
-                width: 380px;
-                padding: 40px;
+
+                width: 90%;
+
+                max-width: 420px;
+
                 background: #fffdf8;
-                border: 1px solid #d8cebf;
-                box-shadow: 12px 12px 0 #ebe3d5;
+
+                padding: 45px;
+
+                border: 1px solid rgba(23,60,49,.15);
+
+                box-shadow:
+                    0 15px 40px
+                    rgba(23,60,49,.08);
+
             }
+
+
+            .small {
+
+                font-size: 10px;
+
+                letter-spacing: 4px;
+
+                color: #31594b;
+
+                margin-bottom: 10px;
+
+            }
+
 
             h1 {
-                margin-top: 0;
-                margin-bottom: 30px;
-                color: #173c31;
+
                 font-family: Georgia, serif;
+
+                font-weight: normal;
+
+                font-size: 42px;
+
+                margin: 0 0 30px;
+
             }
+
 
             label {
+
                 display: block;
+
+                font-size: 12px;
+
+                font-weight: bold;
+
                 margin-bottom: 7px;
-                font-size: 14px;
+
             }
+
 
             input {
+
                 width: 100%;
+
                 padding: 13px;
+
                 margin-bottom: 20px;
-                border: 1px solid #cfc5b5;
+
+                border: 1px solid #d5d0c6;
+
+                background: #faf7f0;
+
                 outline: none;
+
             }
+
 
             input:focus {
+
                 border-color: #173c31;
+
             }
+
 
             button {
+
                 width: 100%;
+
                 padding: 14px;
+
                 border: none;
+
                 background: #173c31;
+
                 color: white;
+
                 cursor: pointer;
+
+                font-weight: bold;
+
             }
+
 
             button:hover {
+
                 background: #31594b;
+
             }
 
+
             .back {
+
                 display: block;
-                margin-top: 20px;
+
                 text-align: center;
-                color: #31594b;
+
+                margin-top: 20px;
+
+                font-size: 12px;
+
+                color: #718078;
+
                 text-decoration: none;
-                font-size: 13px;
+
             }
+
         </style>
+
     </head>
+
 
     <body>
 
+
         <div class="login-box">
 
-            <h1>Admin Login</h1>
+            <p class="small">
+                PRIVATE AREA
+            </p>
+
+
+            <h1>
+                Admin Login
+            </h1>
+
 
             <form method="POST">
 
-                <label>Username</label>
+                <label>
+                    USERNAME
+                </label>
 
                 <input
                     type="text"
@@ -250,7 +524,10 @@ def admin():
                     required
                 >
 
-                <label>Password</label>
+
+                <label>
+                    PASSWORD
+                </label>
 
                 <input
                     type="password"
@@ -258,43 +535,86 @@ def admin():
                     required
                 >
 
+
                 <button type="submit">
-                    Login
+                    LOGIN
                 </button>
 
             </form>
 
-            <a class="back" href="/">
+
+            <a
+                href="/"
+                class="back"
+            >
                 ← Back to Portfolio
             </a>
 
         </div>
 
+
     </body>
+
     </html>
     """
 
 
+
+# ==========================================
+# ADMIN DASHBOARD
+# ==========================================
+
 @app.route("/dashboard")
 def dashboard():
 
+    # Only logged-in admin can access
+
     if not session.get("admin"):
+
         return redirect("/admin")
 
+
     db = get_db()
+
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM profile WHERE id = 1")
+
+    # Profile
+
+    cursor.execute("""
+        SELECT *
+        FROM profile
+        WHERE id = 1
+    """)
+
     profile = cursor.fetchone()
 
-    cursor.execute("SELECT * FROM skills ORDER BY id")
+
+    # Skills
+
+    cursor.execute("""
+        SELECT *
+        FROM skills
+        ORDER BY id
+    """)
+
     skills = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM projects ORDER BY id DESC")
+
+    # Projects
+
+    cursor.execute("""
+        SELECT *
+        FROM projects
+        ORDER BY id DESC
+    """)
+
     projects = cursor.fetchall()
+
 
     cursor.close()
     db.close()
+
 
     return render_template(
         "dashboard.html",
@@ -304,107 +624,180 @@ def dashboard():
     )
 
 
+
+# ==========================================
+# UPDATE PROFILE
+# ==========================================
+
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
 
     if not session.get("admin"):
+
         return redirect("/admin")
 
+
+    name = request.form["name"]
+
+    title = request.form["title"]
+
+    bio = request.form["bio"]
+
+    email = request.form["email"]
+
+    github = request.form["github"]
+
+
     db = get_db()
+
     cursor = db.cursor()
+
 
     cursor.execute("""
         UPDATE profile
+
         SET
             name = %s,
             title = %s,
             bio = %s,
             email = %s,
             github = %s
+
         WHERE id = 1
     """, (
-        request.form["name"],
-        request.form["title"],
-        request.form["bio"],
-        request.form["email"],
-        request.form["github"]
+        name,
+        title,
+        bio,
+        email,
+        github
     ))
 
+
     db.commit()
+
 
     cursor.close()
     db.close()
 
+
     return redirect("/dashboard")
 
+
+
+# ==========================================
+# ADD SKILL
+# ==========================================
 
 @app.route("/add-skill", methods=["POST"])
 def add_skill():
 
     if not session.get("admin"):
+
         return redirect("/admin")
 
+
     skill = request.form["skill"].strip()
+
 
     if skill:
 
         db = get_db()
+
         cursor = db.cursor()
 
-        cursor.execute(
-            "INSERT INTO skills (name) VALUES (%s)",
-            (skill,)
-        )
+
+        cursor.execute("""
+            INSERT INTO skills (name)
+            VALUES (%s)
+        """, (
+            skill,
+        ))
+
 
         db.commit()
+
 
         cursor.close()
         db.close()
 
+
     return redirect("/dashboard")
 
+
+
+# ==========================================
+# DELETE SKILL
+# ==========================================
 
 @app.route("/delete-skill/<int:id>")
 def delete_skill(id):
 
     if not session.get("admin"):
+
         return redirect("/admin")
 
+
     db = get_db()
+
     cursor = db.cursor()
 
-    cursor.execute(
-        "DELETE FROM skills WHERE id = %s",
-        (id,)
-    )
+
+    cursor.execute("""
+        DELETE FROM skills
+        WHERE id = %s
+    """, (
+        id,
+    ))
+
 
     db.commit()
+
 
     cursor.close()
     db.close()
 
+
     return redirect("/dashboard")
 
+
+
+# ==========================================
+# ADD PROJECT
+# ==========================================
 
 @app.route("/add-project", methods=["POST"])
 def add_project():
 
     if not session.get("admin"):
+
         return redirect("/admin")
 
+
     title = request.form["title"].strip()
+
     description = request.form["description"].strip()
+
     technologies = request.form["technologies"].strip()
+
     github = request.form["github"].strip()
+
 
     if title:
 
         db = get_db()
+
         cursor = db.cursor()
+
 
         cursor.execute("""
             INSERT INTO projects
-            (title, description, technologies, github)
+            (
+                title,
+                description,
+                technologies,
+                github
+            )
+
             VALUES (%s, %s, %s, %s)
         """, (
             title,
@@ -413,35 +806,57 @@ def add_project():
             github
         ))
 
+
         db.commit()
+
 
         cursor.close()
         db.close()
 
+
     return redirect("/dashboard")
 
+
+
+# ==========================================
+# DELETE PROJECT
+# ==========================================
 
 @app.route("/delete-project/<int:id>")
 def delete_project(id):
 
     if not session.get("admin"):
+
         return redirect("/admin")
 
+
     db = get_db()
+
     cursor = db.cursor()
 
-    cursor.execute(
-        "DELETE FROM projects WHERE id = %s",
-        (id,)
-    )
+
+    cursor.execute("""
+        DELETE FROM projects
+        WHERE id = %s
+    """, (
+        id,
+    ))
+
 
     db.commit()
+
 
     cursor.close()
     db.close()
 
+
     return redirect("/dashboard")
 
+
+
+# ==========================================
+# LOGOUT
+# ==========================================
 
 @app.route("/logout")
 def logout():
@@ -451,6 +866,13 @@ def logout():
     return redirect("/")
 
 
+
+# ==========================================
+# START APPLICATION
+# ==========================================
+
 if __name__ == "__main__":
+
     setup_database()
+
     app.run(debug=True)

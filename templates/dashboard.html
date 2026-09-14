@@ -1,0 +1,1168 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Panel — {{ profile.name }}</title>
+
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --cream: #f4efe6;
+            --cream-2: #ebe3d5;
+            --green: #173c31;
+            --green-2: #31594b;
+            --text: #26352f;
+            --muted: #718078;
+            --white: #fffdf8;
+            --border: rgba(23,60,49,.15);
+            --danger: #8b3d32;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--cream);
+            color: var(--text);
+            font-family: "Inter", sans-serif;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        .sidebar {
+
+            position: fixed;
+
+            left: 0;
+            top: 0;
+
+            width: 250px;
+            height: 100vh;
+
+            background: var(--green);
+
+            color: white;
+
+            padding: 35px 25px;
+
+            display: flex;
+            flex-direction: column;
+
+            z-index: 1000;
+        }
+
+
+        .logo {
+
+            font-family: "DM Serif Display", serif;
+
+            font-size: 30px;
+
+            margin-bottom: 55px;
+        }
+
+
+        .logo span {
+            color: #cbbd9f;
+        }
+
+
+        .admin-label {
+
+            font-size: 10px;
+
+            letter-spacing: 3px;
+
+            color: #b9cbc1;
+
+            margin-bottom: 15px;
+        }
+
+
+        .sidebar-link {
+
+            display: block;
+
+            padding: 13px 15px;
+
+            margin-bottom: 6px;
+
+            border-radius: 5px;
+
+            font-size: 13px;
+
+            color: #e2e9e5;
+
+            transition: .3s;
+        }
+
+
+        .sidebar-link:hover {
+            background: var(--green-2);
+        }
+
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+
+        .view-site {
+
+            display: block;
+
+            border: 1px solid rgba(255,255,255,.4);
+
+            padding: 12px;
+
+            text-align: center;
+
+            font-size: 12px;
+
+            margin-bottom: 10px;
+
+            transition: .3s;
+        }
+
+
+        .view-site:hover {
+
+            background: white;
+
+            color: var(--green);
+        }
+
+
+        .logout {
+
+            display: block;
+
+            background: #cbbd9f;
+
+            color: var(--green);
+
+            padding: 12px;
+
+            text-align: center;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            transition: .3s;
+        }
+
+
+        .logout:hover {
+            background: white;
+        }
+
+
+
+        /* =========================
+           MAIN
+        ========================= */
+
+        .main {
+
+            margin-left: 250px;
+
+            padding: 55px 7%;
+
+            max-width: 1500px;
+        }
+
+
+        .top {
+            margin-bottom: 50px;
+        }
+
+
+        .label {
+
+            color: var(--green-2);
+
+            font-size: 10px;
+
+            letter-spacing: 4px;
+
+            font-weight: 600;
+        }
+
+
+        .top h1 {
+
+            font-family: "DM Serif Display", serif;
+
+            font-size: clamp(45px, 6vw, 75px);
+
+            color: var(--green);
+
+            font-weight: 400;
+
+            line-height: 1;
+
+            margin-top: 10px;
+        }
+
+
+        .top p {
+
+            margin-top: 15px;
+
+            color: var(--muted);
+
+            font-size: 14px;
+        }
+
+
+
+        /* =========================
+           CARD
+        ========================= */
+
+        .card {
+
+            background: var(--white);
+
+            border: 1px solid var(--border);
+
+            padding: 35px;
+
+            margin-bottom: 25px;
+        }
+
+
+        .card-heading {
+            margin-bottom: 30px;
+        }
+
+
+        .card-heading h2 {
+
+            font-family: "DM Serif Display", serif;
+
+            font-size: 34px;
+
+            font-weight: 400;
+
+            color: var(--green);
+        }
+
+
+        .card-heading p {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin-top: 5px;
+        }
+
+
+
+        /* =========================
+           FORMS
+        ========================= */
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+
+        .form-group label {
+
+            display: block;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            color: var(--green);
+
+            margin-bottom: 7px;
+        }
+
+
+        input,
+        textarea {
+
+            width: 100%;
+
+            border: 1px solid var(--border);
+
+            background: #faf7f0;
+
+            padding: 13px 15px;
+
+            font-family: "Inter", sans-serif;
+
+            font-size: 13px;
+
+            color: var(--text);
+
+            outline: none;
+
+            transition: .3s;
+        }
+
+
+        input:focus,
+        textarea:focus {
+
+            border-color: var(--green);
+        }
+
+
+        textarea {
+
+            min-height: 130px;
+
+            resize: vertical;
+        }
+
+
+        .two-column {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 20px;
+        }
+
+
+        .button {
+
+            border: 1px solid var(--green);
+
+            background: var(--green);
+
+            color: white;
+
+            padding: 13px 24px;
+
+            font-family: "Inter", sans-serif;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+            transition: .3s;
+        }
+
+
+        .button:hover {
+
+            background: var(--green-2);
+
+            transform: translateY(-2px);
+        }
+
+
+
+        /* =========================
+           SKILLS
+        ========================= */
+
+        .skills-list {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            margin-bottom: 30px;
+        }
+
+
+        .skill {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            background: var(--cream-2);
+
+            padding: 10px 14px;
+
+            color: var(--green);
+
+            font-size: 12px;
+        }
+
+
+        .delete-skill {
+
+            color: var(--danger);
+
+            font-weight: bold;
+
+            font-size: 16px;
+        }
+
+
+        .skill-form {
+
+            display: flex;
+
+            gap: 10px;
+
+            max-width: 500px;
+        }
+
+
+        .skill-form input {
+            flex: 1;
+        }
+
+
+
+        /* =========================
+           PROJECTS
+        ========================= */
+
+        .project {
+
+            border: 1px solid var(--border);
+
+            padding: 25px;
+
+            margin-bottom: 15px;
+
+            position: relative;
+        }
+
+
+        .project-number {
+
+            font-size: 10px;
+
+            letter-spacing: 3px;
+
+            color: var(--green-2);
+        }
+
+
+        .project h3 {
+
+            font-family: "DM Serif Display", serif;
+
+            font-size: 28px;
+
+            font-weight: 400;
+
+            color: var(--green);
+
+            margin: 12px 0;
+        }
+
+
+        .project-description {
+
+            font-size: 13px;
+
+            color: var(--muted);
+
+            margin-bottom: 10px;
+        }
+
+
+        .project-tech {
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            color: var(--green-2);
+
+            margin-bottom: 15px;
+        }
+
+
+        .project-github {
+
+            font-size: 12px;
+
+            color: var(--green);
+
+            margin-bottom: 15px;
+
+            word-break: break-all;
+        }
+
+
+        .delete-project {
+
+            color: var(--danger);
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            border-bottom: 1px solid var(--danger);
+        }
+
+
+
+        /* =========================
+           DIVIDER
+        ========================= */
+
+        .divider {
+
+            height: 1px;
+
+            background: var(--border);
+
+            margin: 35px 0;
+        }
+
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media(max-width: 850px) {
+
+            .sidebar {
+
+                position: relative;
+
+                width: 100%;
+
+                height: auto;
+
+                padding: 25px;
+            }
+
+
+            .logo {
+
+                margin-bottom: 25px;
+            }
+
+
+            .sidebar-bottom {
+
+                margin-top: 20px;
+            }
+
+
+            .main {
+
+                margin-left: 0;
+
+                padding: 40px 6%;
+            }
+
+
+            .two-column {
+
+                grid-template-columns: 1fr;
+
+                gap: 0;
+            }
+
+
+            .skill-form {
+
+                flex-direction: column;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<aside class="sidebar">
+
+    <div>
+
+        <div class="logo">
+
+            {{ profile.name }}<span>.</span>
+
+        </div>
+
+
+        <p class="admin-label">
+
+            ADMIN PANEL
+
+        </p>
+
+
+        <a
+            href="#profile"
+            class="sidebar-link"
+        >
+            Profile
+        </a>
+
+
+        <a
+            href="#skills"
+            class="sidebar-link"
+        >
+            Skills
+        </a>
+
+
+        <a
+            href="#projects"
+            class="sidebar-link"
+        >
+            Projects
+        </a>
+
+    </div>
+
+
+    <div class="sidebar-bottom">
+
+        <a
+            href="/"
+            target="_blank"
+            class="view-site"
+        >
+            View Portfolio →
+        </a>
+
+
+        <a
+            href="/logout"
+            class="logout"
+        >
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =========================
+     MAIN CONTENT
+========================= -->
+
+<main class="main">
+
+
+    <!-- HEADER -->
+
+    <div class="top">
+
+        <p class="label">
+            DASHBOARD
+        </p>
+
+
+        <h1>
+            Welcome, {{ profile.name }}.
+        </h1>
+
+
+        <p>
+            Manage the content displayed on your portfolio.
+        </p>
+
+    </div>
+
+
+
+    <!-- =========================
+         PROFILE
+    ========================= -->
+
+    <section
+        class="card"
+        id="profile"
+    >
+
+        <div class="card-heading">
+
+            <h2>
+                Profile
+            </h2>
+
+
+            <p>
+                Edit the main information about you.
+            </p>
+
+        </div>
+
+
+        <form
+            action="/update-profile"
+            method="POST"
+        >
+
+
+            <div class="two-column">
+
+
+                <div class="form-group">
+
+                    <label>
+                        NAME
+                    </label>
+
+
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ profile.name }}"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        TITLE
+                    </label>
+
+
+                    <input
+                        type="text"
+                        name="title"
+                        value="{{ profile.title }}"
+                        required
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label>
+                    BIO
+                </label>
+
+
+                <textarea
+                    name="bio"
+                    required
+                >{{ profile.bio }}</textarea>
+
+            </div>
+
+
+
+            <div class="two-column">
+
+
+                <div class="form-group">
+
+                    <label>
+                        EMAIL
+                    </label>
+
+
+                    <input
+                        type="email"
+                        name="email"
+                        value="{{ profile.email }}"
+                        required
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        GITHUB
+                    </label>
+
+
+                    <input
+                        type="url"
+                        name="github"
+                        value="{{ profile.github }}"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <button
+                type="submit"
+                class="button"
+            >
+                Save Profile
+            </button>
+
+
+        </form>
+
+    </section>
+
+
+
+    <!-- =========================
+         SKILLS
+    ========================= -->
+
+    <section
+        class="card"
+        id="skills"
+    >
+
+
+        <div class="card-heading">
+
+            <h2>
+                Skills
+            </h2>
+
+
+            <p>
+                Add or remove skills from your portfolio.
+            </p>
+
+        </div>
+
+
+
+        <div class="skills-list">
+
+
+            {% for skill in skills %}
+
+
+                <div class="skill">
+
+                    <span>
+                        {{ skill.name }}
+                    </span>
+
+
+                    <a
+                        href="/delete-skill/{{ skill.id }}"
+                        class="delete-skill"
+                        title="Delete skill"
+                    >
+                        ×
+                    </a>
+
+                </div>
+
+
+            {% else %}
+
+
+                <p>
+                    No skills added yet.
+                </p>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+
+        <form
+            action="/add-skill"
+            method="POST"
+            class="skill-form"
+        >
+
+
+            <input
+                type="text"
+                name="skill"
+                placeholder="Example: JavaScript"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="button"
+            >
+                + Add Skill
+            </button>
+
+
+        </form>
+
+
+    </section>
+
+
+
+    <!-- =========================
+         PROJECTS
+    ========================= -->
+
+    <section
+        class="card"
+        id="projects"
+    >
+
+
+        <div class="card-heading">
+
+            <h2>
+                Projects
+            </h2>
+
+
+            <p>
+                Manage the projects displayed on your portfolio.
+            </p>
+
+        </div>
+
+
+
+        <!-- EXISTING PROJECTS -->
+
+        {% for project in projects %}
+
+
+            <div class="project">
+
+
+                <span class="project-number">
+
+                    PROJECT {{ "%02d" | format(loop.index) }}
+
+                </span>
+
+
+
+                <h3>
+
+                    {{ project.title }}
+
+                </h3>
+
+
+
+                <p class="project-description">
+
+                    {{ project.description }}
+
+                </p>
+
+
+
+                <p class="project-tech">
+
+                    {{ project.technologies }}
+
+                </p>
+
+
+
+                {% if project.github %}
+
+                    <p class="project-github">
+
+                        {{ project.github }}
+
+                    </p>
+
+                {% endif %}
+
+
+
+                <a
+                    href="/delete-project/{{ project.id }}"
+                    class="delete-project"
+                >
+                    Delete Project
+                </a>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <p>
+                No projects added yet.
+            </p>
+
+
+        {% endfor %}
+
+
+
+        <div class="divider"></div>
+
+
+
+        <!-- ADD PROJECT -->
+
+        <div class="card-heading">
+
+            <h2>
+                Add Project
+            </h2>
+
+
+            <p>
+                Add a new project to your portfolio.
+            </p>
+
+        </div>
+
+
+
+        <form
+            action="/add-project"
+            method="POST"
+        >
+
+
+            <div class="form-group">
+
+                <label>
+                    PROJECT TITLE
+                </label>
+
+
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="Project name"
+                    required
+                >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label>
+                    DESCRIPTION
+                </label>
+
+
+                <textarea
+                    name="description"
+                    placeholder="Describe what you built..."
+                ></textarea>
+
+            </div>
+
+
+
+            <div class="two-column">
+
+
+                <div class="form-group">
+
+                    <label>
+                        TECHNOLOGIES
+                    </label>
+
+
+                    <input
+                        type="text"
+                        name="technologies"
+                        placeholder="Python, Flask, MySQL"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        GITHUB LINK
+                    </label>
+
+
+                    <input
+                        type="url"
+                        name="github"
+                        placeholder="https://github.com/..."
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <button
+                type="submit"
+                class="button"
+            >
+                + Add Project
+            </button>
+
+
+        </form>
+
+
+    </section>
+
+
+</main>
+
+
+</body>
+
+</html>
+
